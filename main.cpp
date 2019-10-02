@@ -16,33 +16,33 @@
 #define E_IP_ARP_SIZE 28
 
 struct ethernet {
-		u_char ether_dhost[ETHER_ADDR_LEN];
-		u_char ether_shost[ETHER_ADDR_LEN];
-		u_short ether_type;
+		uint8_t ether_dhost[ETHER_ADDR_LEN];
+		uint8_t ether_shost[ETHER_ADDR_LEN];
+		uint16_t ether_type;
 };
 
 struct ethernet_ip_arp {
-	u_short htype;
-	u_short ptype;
-	u_char hlen;
-	u_char plen;
-	u_short operation;
-	u_char sha[6];
-	u_char spa[4];
-	u_char tha[6];
-	u_char tpa[4];
+	uint16_t htype;
+	uint16_t ptype;
+	uint8_t hlen;
+	uint8_t plen;
+	uint16_t operation;
+	uint8_t sha[6];
+	uint8_t spa[4];
+	uint8_t tha[6];
+	uint8_t tpa[4];
 };
 
 
 struct sniff_ip {
-		u_char ip_vhl;
-		u_char ip_tos;
-		u_short ip_len;
-		u_short ip_id;
-		u_short ip_off;
-		u_char ip_ttl;
-		u_char ip_p;
-		u_short ip_sum;
+		uint8_t ip_vhl;
+		uint8_t ip_tos;
+		uint16_t ip_len;
+		uint16_t ip_id;
+		uint16_t ip_off;
+		uint8_t ip_ttl;
+		uint8_t ip_p;
+		uint16_t ip_sum;
 		struct in_addr ip_src,ip_dst;
 };
 
@@ -52,7 +52,7 @@ void usage() {
 }
 
 struct in_addr my_ip;
-u_char my_mac[6], sender_mac[6], my_packet[ETHERNET_SIZE+E_IP_ARP_SIZE];
+uint8_t my_mac[6], sender_mac[6], my_packet[ETHERNET_SIZE+E_IP_ARP_SIZE];
 
 int get_myinfo()
 {
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
   	while(true) 
   	{
 		struct pcap_pkthdr* header;
-    		const u_char* packet;
+    		const uint8_t* packet;
     		send_arpreq(handle, sender_ip);
 		int res = pcap_next_ex(handle, &header, &packet);
     		if (res == 0) continue;
@@ -206,31 +206,21 @@ int main(int argc, char* argv[])
 	memcpy(my_arp->tha, sender_mac, ETHER_ADDR_LEN);
 	memcpy(my_arp->spa, &(target_ip.s_addr), IP_ADDR_LEN);
 	memcpy(my_arp->sha, my_mac, ETHER_ADDR_LEN);
-  	u_short type_chk, operation_chk;
-	type_chk = htons((u_short)ETHERTYPE_ARP);
-	operation_chk = htons((u_short)1);
+  	uint16_t type_chk, operation_chk;
+	type_chk = htons((uint16_t)ETHERTYPE_ARP);
+	operation_chk = htons((uint16_t)1);
 	
 	while (true) 
 	{
-    		struct pcap_pkthdr* header;
-    		const u_char* packet;
-    		int res = pcap_next_ex(handle, &header, &packet);
-    		if (res == 0) continue;
-    		if (res == -1 || res == -2) break;
-		
-		struct ethernet * req_ether = (struct ethernet *)packet;
-		struct ethernet_ip_arp * req_arp = (struct ethernet_ip_arp *)(packet + ETHERNET_SIZE);
-
-		if( (req_ether->ether_type)==type_chk && (req_arp->operation)==operation_chk)
+		printf("Send Packet??\n");
+		getchar();
+    		if(pcap_sendpacket(handle, my_packet, ETHERNET_SIZE+E_IP_ARP_SIZE)==-1)
 		{
-			if(pcap_sendpacket(handle, my_packet, ETHERNET_SIZE+E_IP_ARP_SIZE)==-1)
-			{
 				printf("send errror\n");
 				break;
-			}
-		printf("send packet!!!!!\n");
 		}
-  }
+		printf("send packet!!!!!\n");
+	}
   pcap_close(handle);
   return 0;
 }
